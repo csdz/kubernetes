@@ -148,10 +148,12 @@ cluster's shared state through which all other components interact.`,
 }
 
 // Run runs the specified APIServer.  This should never exit.
+// 启动逻辑，先创建服务链，先启动一些聚合api，再真正启动
 func Run(completeOptions completedServerRunOptions, stopCh <-chan struct{}) error {
 	// To help debugging, immediately log version
 	klog.Infof("Version: %+v", version.Get())
 
+	// 创建服务链，先构建扩展配置，然后构建配置，然后再构建api
 	server, err := CreateServerChain(completeOptions, stopCh)
 	if err != nil {
 		return err
@@ -167,11 +169,13 @@ func Run(completeOptions completedServerRunOptions, stopCh <-chan struct{}) erro
 
 // CreateServerChain creates the apiservers connected via delegation.
 func CreateServerChain(completedOptions completedServerRunOptions, stopCh <-chan struct{}) (*aggregatorapiserver.APIAggregator, error) {
+	// 创建 连接节点的隧道，其实就是ssh方式，ssh让云计算服务商cloudprovider实现 AddSSHKeyToAllInstances 接口
 	nodeTunneler, proxyTransport, err := CreateNodeDialer(completedOptions)
 	if err != nil {
 		return nil, err
 	}
 
+	// 创建apiserver的配置
 	kubeAPIServerConfig, insecureServingInfo, serviceResolver, pluginInitializer, err := CreateKubeAPIServerConfig(completedOptions, nodeTunneler, proxyTransport)
 	if err != nil {
 		return nil, err
@@ -188,6 +192,7 @@ func CreateServerChain(completedOptions completedServerRunOptions, stopCh <-chan
 		return nil, err
 	}
 
+	// 创建apiserver服务的handler
 	kubeAPIServer, err := CreateKubeAPIServer(kubeAPIServerConfig, apiExtensionsServer.GenericAPIServer)
 	if err != nil {
 		return nil, err
@@ -216,6 +221,7 @@ func CreateServerChain(completedOptions completedServerRunOptions, stopCh <-chan
 
 // CreateKubeAPIServer creates and wires a workable kube-apiserver
 func CreateKubeAPIServer(kubeAPIServerConfig *master.Config, delegateAPIServer genericapiserver.DelegationTarget) (*master.Master, error) {
+	// complete会填充一些合理的参数，并new apiserver的handler
 	kubeAPIServer, err := kubeAPIServerConfig.Complete().New(delegateAPIServer)
 	if err != nil {
 		return nil, err

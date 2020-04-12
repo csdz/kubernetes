@@ -85,25 +85,29 @@ type ServerRunOptions struct {
 // NewServerRunOptions creates a new ServerRunOptions object with default parameters
 func NewServerRunOptions() *ServerRunOptions {
 	s := ServerRunOptions{
+		// 一些普通参数的设置
 		GenericServerRunOptions: genericoptions.NewServerRunOptions(),
-		Etcd:                    genericoptions.NewEtcdOptions(storagebackend.NewDefaultConfig(kubeoptions.DefaultEtcdPathPrefix, nil)),
-		SecureServing:           kubeoptions.NewSecureServingOptions(),
-		InsecureServing:         kubeoptions.NewInsecureServingOptions(),
-		Audit:                   genericoptions.NewAuditOptions(),
-		Features:                genericoptions.NewFeatureOptions(),
-		Admission:               kubeoptions.NewAdmissionOptions(),
-		Authentication:          kubeoptions.NewBuiltInAuthenticationOptions().WithAll(),
-		Authorization:           kubeoptions.NewBuiltInAuthorizationOptions(),
-		CloudProvider:           kubeoptions.NewCloudProviderOptions(),
-		APIEnablement:           genericoptions.NewAPIEnablementOptions(),
-		EgressSelector:          genericoptions.NewEgressSelectorOptions(),
+		// ectd的连接地址：Etcd.StorageConfig.Transport.ServerList []string
+		Etcd:            genericoptions.NewEtcdOptions(storagebackend.NewDefaultConfig(kubeoptions.DefaultEtcdPathPrefix, nil)),
+		SecureServing:   kubeoptions.NewSecureServingOptions(),
+		InsecureServing: kubeoptions.NewInsecureServingOptions(),
+		Audit:           genericoptions.NewAuditOptions(),
+		Features:        genericoptions.NewFeatureOptions(),
+		Admission:       kubeoptions.NewAdmissionOptions(),
+		Authentication:  kubeoptions.NewBuiltInAuthenticationOptions().WithAll(),
+		Authorization:   kubeoptions.NewBuiltInAuthorizationOptions(),
+		CloudProvider:   kubeoptions.NewCloudProviderOptions(),
+		APIEnablement:   genericoptions.NewAPIEnablementOptions(),
+		EgressSelector:  genericoptions.NewEgressSelectorOptions(),
 
 		EnableLogsHandler:      true,
 		EventTTL:               1 * time.Hour,
 		MasterCount:            1,
 		EndpointReconcilerType: string(reconcilers.LeaseEndpointReconcilerType),
 		KubeletConfig: kubeletclient.KubeletClientConfig{
-			Port:         ports.KubeletPort,
+			// 10250，需要SSL证书
+			Port: ports.KubeletPort,
+			// 10255，不需要SSL证书，只为heapster开放，后来metric-server替换了heapster，所以这个端口废弃了
 			ReadOnlyPort: ports.KubeletReadOnlyPort,
 			PreferredAddressTypes: []string{
 				// --override-hostname
@@ -120,6 +124,7 @@ func NewServerRunOptions() *ServerRunOptions {
 			EnableHTTPS: true,
 			HTTPTimeout: time.Duration(5) * time.Second,
 		},
+		// 默认service的nodeport范围[30000, 32768]
 		ServiceNodePortRange: kubeoptions.DefaultServiceNodePortRange,
 	}
 

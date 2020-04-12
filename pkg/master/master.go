@@ -347,6 +347,7 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		routes.Logs{}.Install(s.Handler.GoRestfulContainer)
 	}
 
+	// TODO 1.18的新特性，先忽略
 	if utilfeature.DefaultFeatureGate.Enabled(features.ServiceAccountIssuerDiscovery) {
 		// Metadata and keys are expected to only change across restarts at present,
 		// so we just marshal immediately and serve the cached JSON bytes.
@@ -386,6 +387,7 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 	}
 
 	// install legacy rest storage
+	// 先建立老的rest接口
 	if c.ExtraConfig.APIResourceConfigSource.VersionEnabled(apiv1.SchemeGroupVersion) {
 		legacyRESTStorageProvider := corerest.LegacyRESTStorageProvider{
 			StorageFactory:              c.ExtraConfig.StorageFactory,
@@ -412,6 +414,7 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 	// with specific priorities.
 	// TODO: describe the priority all the way down in the RESTStorageProviders and plumb it back through the various discovery
 	// handlers that we have.
+	// 这个正式的接口handler，每一个storageProvider是一种，为每一种k8s资源提供RESTStorage
 	restStorageProviders := []RESTStorageProvider{
 		auditregistrationrest.RESTStorageProvider{},
 		authenticationrest.RESTStorageProvider{Authenticator: c.GenericConfig.Authentication.Authenticator, APIAudiences: c.GenericConfig.Authentication.APIAudiences},
@@ -436,6 +439,7 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		admissionregistrationrest.RESTStorageProvider{},
 		eventsrest.RESTStorageProvider{TTL: c.ExtraConfig.EventTTL},
 	}
+	// 构建api handler
 	if err := m.InstallAPIs(c.ExtraConfig.APIResourceConfigSource, c.GenericConfig.RESTOptionsGetter, restStorageProviders...); err != nil {
 		return nil, err
 	}
