@@ -446,7 +446,7 @@ func (s *GenericAPIServer) InstallLegacyAPIGroup(apiPrefix string, apiGroupInfo 
 	return nil
 }
 
-// Exposes given api groups in the API.
+// Exposes given api groups in the API. 将groups的api暴露出来
 func (s *GenericAPIServer) InstallAPIGroups(apiGroupInfos ...*APIGroupInfo) error {
 	for _, apiGroupInfo := range apiGroupInfos {
 		// Do not register empty group or empty version.  Doing so claims /apis/ for the wrong entity to be returned.
@@ -506,7 +506,9 @@ func (s *GenericAPIServer) InstallAPIGroup(apiGroupInfo *APIGroupInfo) error {
 
 func (s *GenericAPIServer) getAPIGroupVersion(apiGroupInfo *APIGroupInfo, groupVersion schema.GroupVersion, apiPrefix string) *genericapi.APIGroupVersion {
 	storage := make(map[string]rest.Storage)
+	// VersionedResourcesStorageMap是map[string]map[string]rest.Storage，It's a map from version to resource to the storage，在Installer.install的创建webService会议这个path为路径
 	for k, v := range apiGroupInfo.VersionedResourcesStorageMap[groupVersion.Version] {
+		// storage的key是resource，val是rest.Storage
 		storage[strings.ToLower(k)] = v
 	}
 	version := s.newAPIGroupVersion(apiGroupInfo, groupVersion)

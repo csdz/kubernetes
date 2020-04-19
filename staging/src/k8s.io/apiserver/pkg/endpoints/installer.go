@@ -89,13 +89,15 @@ var toDiscoveryKubeVerb = map[string]string{
 	"WATCHLIST":        "watch",
 }
 
-// Install handlers for API resources.
+// Install handlers for API resources. 对该资源的操作，比如DELETE，GET等放入到webService中
 func (a *APIInstaller) Install() ([]metav1.APIResource, *restful.WebService, []error) {
 	var apiResources []metav1.APIResource
 	var errors []error
+	// 新建一个webService
 	ws := a.newWebService()
 
 	// Register the paths in a deterministic (sorted) order to get a deterministic swagger spec.
+	// 为了把api path 排序一下，path是resource名称，例如pod，configmap，value是rest.Storage
 	paths := make([]string, len(a.group.Storage))
 	var i int = 0
 	for path := range a.group.Storage {
@@ -118,6 +120,7 @@ func (a *APIInstaller) Install() ([]metav1.APIResource, *restful.WebService, []e
 // newWebService creates a new restful webservice with the api installer's prefix and version.
 func (a *APIInstaller) newWebService() *restful.WebService {
 	ws := new(restful.WebService)
+	// 一个webService共享一个prefix
 	ws.Path(a.prefix)
 	// a.prefix contains "prefix/group/version"
 	ws.Doc("API at " + a.prefix)
@@ -178,6 +181,7 @@ func GetResourceKind(groupVersion schema.GroupVersion, storage rest.Storage, typ
 	return fqKindToRegister, nil
 }
 
+// path是resource名称，例如pod，configmap，storage是rest.Storage类型
 func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storage, ws *restful.WebService) (*metav1.APIResource, error) {
 	admit := a.group.Admit
 
@@ -186,6 +190,7 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 		optionsExternalVersion = *a.group.OptionsExternalVersion
 	}
 
+	// 可能有子资源，例如 pod/exec, pod/logs
 	resource, subresource, err := splitSubresource(path)
 	if err != nil {
 		return nil, err
@@ -193,6 +198,7 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 
 	group, version := a.group.GroupVersion.Group, a.group.GroupVersion.Version
 
+	// fully qualified kinds：完全限定名称
 	fqKindToRegister, err := GetResourceKind(a.group.GroupVersion, storage, a.group.Typer)
 	if err != nil {
 		return nil, err
@@ -228,6 +234,7 @@ func (a *APIInstaller) registerResourceHandlers(path string, storage rest.Storag
 	}
 
 	// what verbs are supported by the storage, used to know what verbs we support per path
+	// storage是一个interface，rest.Creater，rest.NamedCreater都实现了它New的接口
 	creater, isCreater := storage.(rest.Creater)
 	namedCreater, isNamedCreater := storage.(rest.NamedCreater)
 	lister, isLister := storage.(rest.Lister)

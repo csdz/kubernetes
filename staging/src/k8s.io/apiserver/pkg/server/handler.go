@@ -76,6 +76,10 @@ func NewAPIServerHandler(name string, s runtime.NegotiatedSerializer, handlerCha
 		nonGoRestfulMux.NotFoundHandler(notFoundHandler)
 	}
 
+	// 创建container，一个container由一组webServicer和Mux组成；https://github.com/emicklei/go-restful/blob/master/examples/restful-multi-containers.go
+	// 一个webService有一组route组成，共享一个root path，即apiGroupVersion （在installer.go 中Install创建）
+	// 一个route由path，HTTP method，输入输出格式，以及routeFunction;
+	// 一个routeFunction的接入如下：type RouteFunction func(*Request, *Response)
 	gorestfulContainer := restful.NewContainer()
 	gorestfulContainer.ServeMux = http.NewServeMux()
 	gorestfulContainer.Router(restful.CurlyRouter{}) // e.g. for proxy/{kind}/{name}/{*}

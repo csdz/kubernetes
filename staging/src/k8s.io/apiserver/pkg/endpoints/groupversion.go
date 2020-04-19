@@ -95,6 +95,7 @@ type APIGroupVersion struct {
 // It is expected that the provided path root prefix will serve all operations. Root MUST NOT end
 // in a slash.
 func (g *APIGroupVersion) InstallREST(container *restful.Container) error {
+	// 用 g.GroupVersion变量来构造一个Rest API Path前缀并赋值给APIInstaller的prefix变量
 	prefix := path.Join(g.Root, g.GroupVersion.Group, g.GroupVersion.Version)
 	installer := &APIInstaller{
 		group:             g,
@@ -102,9 +103,12 @@ func (g *APIGroupVersion) InstallREST(container *restful.Container) error {
 		minRequestTimeout: g.MinRequestTimeout,
 	}
 
+	// installer.install里用prefix前缀生成webService的相对根路径
 	apiResources, ws, registrationErrors := installer.Install()
 	versionDiscoveryHandler := discovery.NewAPIVersionHandler(g.Serializer, g.GroupVersion, staticLister{apiResources})
+	// 把handler添加到webService中
 	versionDiscoveryHandler.AddToWebService(ws)
+	// 把webService加入到container中
 	container.Add(ws)
 	return utilerrors.NewAggregate(registrationErrors)
 }
